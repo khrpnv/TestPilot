@@ -1,0 +1,102 @@
+//
+//  WelcomeView.swift
+//  TestPilot
+//
+//  Created by Illia Khrypunov on 28.06.2025.
+//
+
+import SwiftUI
+
+struct WelcomeView: View {
+    // MARK: - Properties
+    let viewModel: WelcomeViewModel
+    
+    // MARK: - Body
+    var body: some View {
+        VStack(spacing: Constant.contentSpacing) {
+            Assets.Shared.Images.logo
+                .resizable()
+                .cornerRadius(Constant.logoCornerRadius)
+                .frame(width: Constant.logoSize, height: Constant.logoSize)
+            
+            Text(Strings.Welcome.title)
+                .font(.system(size: 30))
+                .fontWeight(.bold)
+                .foregroundStyle(.white)
+            
+            Text(Strings.Welcome.description)
+                .font(.system(size: 17))
+                .foregroundColor(Color(.white))
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: Constant.descriptionMaxWidth)
+            
+            HStack(spacing: Constant.buttonsStackSpacing) {
+                Button {
+                    viewModel.generate(type: .unitTests)
+                } label: {
+                    prepareButtonLabel(Strings.Welcome.createTestsButtonTitle)
+                }
+                .buttonStyle(PrimaryRedButton())
+                
+                Button {
+                    viewModel.evaluate()
+                } label: {
+                    prepareButtonLabel(Strings.Welcome.evaluateTestsButtonTitle)
+                }
+                .buttonStyle(PrimaryRedButton())
+                
+                Button {
+                    viewModel.userFlows()
+                } label: {
+                    prepareButtonLabel(Strings.Welcome.generateUITestsButtonTitle)
+                }
+                .buttonStyle(PrimaryRedButton())
+            }
+            
+            HStack(spacing: Constant.buttonsStackSpacing) {
+                Button {
+                    viewModel.generate(type: .performanceTests)
+                } label: {
+                    prepareButtonLabel(Strings.Welcome.performanceTestsButtonTitle)
+                }
+                .buttonStyle(PrimaryRedButton())
+                
+                Button {
+                    viewModel.generate(type: .accessibilityTests)
+                } label: {
+                    prepareButtonLabel(Strings.Welcome.accessibilityTestsButtonTitle)
+                }
+                .buttonStyle(PrimaryRedButton())
+                
+                Button {
+                    viewModel.accessibility()
+                } label: {
+                    prepareButtonLabel(Strings.Welcome.accessibilityAnalyzerButtonTitle)
+                }
+                .buttonStyle(PrimaryRedButton())
+            }
+        }
+        .padding()
+        .containerRelativeFrame([.horizontal, .vertical])
+        .background(Colors.appDarkGray)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+// MARK: - Private
+private extension WelcomeView {
+    func prepareButtonLabel(_ content: String) -> some View {
+        return Text(content)
+            .font(.system(size: 14))
+    }
+}
+
+// MARK: - Constants
+private enum Constant {
+    static let contentSpacing: CGFloat = 30.0
+    static let logoSize: CGFloat = 150.0
+    static let logoCornerRadius: CGFloat = 10.0
+    static let buttonsStackSpacing: CGFloat = 20.0
+    static let descriptionMaxWidth: CGFloat = 600.0
+    static let commingSoonContentSpacing: CGFloat = 10.0
+}
