@@ -34,7 +34,6 @@ private extension AccessibilityAnalysisComponentDetailsView {
             Text("Run the analysis to see component summary information.")
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, Constant.contentHorizontalPadding)
 
             Spacer()
         }
@@ -48,7 +47,7 @@ private extension AccessibilityAnalysisComponentDetailsView {
                     .font(.title3)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
-                    .padding(.horizontal, Constant.contentHorizontalPadding)
+                    .padding(.horizontal)
 
                 detailCard(
                     emoji: "🧩",
@@ -94,11 +93,10 @@ private extension AccessibilityAnalysisComponentDetailsView {
                 .foregroundColor(.white)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(Constant.cardContentPadding)
+        .padding(.horizontal)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Colors.appDarkGray1.opacity(0.6))
         .clipShape(RoundedRectangle(cornerRadius: Constant.itemCornerRadius))
-        .padding(.horizontal, Constant.contentHorizontalPadding)
     }
 }
 
@@ -121,6 +119,4 @@ private enum Constant {
     static let containerCornerRadius: CGFloat = 14
     static let sectionSpacing: CGFloat = 16
     static let itemCornerRadius: CGFloat = 10
-    static let contentHorizontalPadding: CGFloat = 4
-    static let cardContentPadding: CGFloat = 12
 }

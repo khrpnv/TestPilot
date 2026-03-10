@@ -16,7 +16,15 @@ protocol AccessibilityAnalysisService {
     func performFormalAnalysis(
         code: String,
         component: String,
+        purpose: AccessibilityAnalysisComponentPurpose?,
         completion: @escaping (Result<AccessibilityAnalysisFormalFindings?, Error>) -> Void
+    )
+    func performHeuristicAnalysis(
+        code: String,
+        component: String,
+        purpose: AccessibilityAnalysisComponentPurpose?,
+        formalFindings: AccessibilityAnalysisFormalFindings?,
+        completion: @escaping (Result<AccessibilityAnalysisHeuristicFindings?, Error>) -> Void
     )
 }
 
@@ -39,42 +47,128 @@ final class AccessibilityAnalysisServiceImpl: PromptService, AccessibilityAnalys
                 )
             ]
         )
-        Task {
-            let mockedResponse = AccessibilityAnalyzerMock.getMock(for: component)
-            
-            do {
-                let mock = ApplicationConfigurations.useMocks
-                let response = mock ? mockedResponse : try await prompt(body: body)
-                let output = preparePurposeOutput(response: response.choices.first?.message.content)
-                completion(.success(output))
-            } catch {
-                let response = mockedResponse
-                let output = preparePurposeOutput(response: response.choices.first?.message.content)
-                completion(.success(output))
-            }
-        }
+        
+        let mockedResponse = AccessibilityAnalyzerMock.getPurposeMock(for: component)
+        
+        executeAnalysis(
+            requestBody: body,
+            mockedResponse: mockedResponse,
+            completion: completion
+        )
     }
     
     func performFormalAnalysis(
         code: String,
         component: String,
+        purpose: AccessibilityAnalysisComponentPurpose?,
         completion: @escaping (Result<AccessibilityAnalysisFormalFindings?, Error>) -> Void
     ) {
+        let body = PromptRequest(
+            model: PromptServiceConfigurations.shared.model.rawValue,
+            messages: [
+                .init(
+                    role: .system,
+                    content: AccessibilityAnalysisPrompts.FormalChecks.systemPrompt
+                ),
+                .init(
+                    role: .user,
+                    content: AccessibilityAnalysisPrompts.FormalChecks.createUserPrompt(
+                        input: code,
+                        purpose: purpose
+                    )
+                )
+            ]
+        )
         
+        let mockedResponse = AccessibilityAnalyzerMock.getFormalChecksMock(for: component)
+        
+        executeAnalysis(
+            requestBody: body,
+            mockedResponse: mockedResponse,
+            completion: completion
+        )
+    }
+    
+    func performHeuristicAnalysis(
+        code: String,
+        component: String,
+        purpose: AccessibilityAnalysisComponentPurpose?,
+        formalFindings: AccessibilityAnalysisFormalFindings?,
+        completion: @escaping (Result<AccessibilityAnalysisHeuristicFindings?, any Error>) -> Void
+    ) {
+        let body = PromptRequest(
+            model: PromptServiceConfigurations.shared.model.rawValue,
+            messages: [
+                .init(
+                    role: .system,
+                    content: AccessibilityAnalysisPrompts.HeuristicChecks.systemPrompt
+                ),
+                .init(
+                    role: .user,
+                    content: AccessibilityAnalysisPrompts.HeuristicChecks.createUserPrompt(
+                        input: code,
+                        purpose: purpose,
+                        formalFindings: formalFindings
+                    )
+                )
+            ]
+        )
+        
+        let mockedResponse = AccessibilityAnalyzerMock.getHeuristicChecksMock(for: component)
+        
+        executeAnalysis(
+            requestBody: body,
+            mockedResponse: mockedResponse,
+            completion: completion
+        )
     }
 }
 
 // MARK: - Private
 private extension AccessibilityAnalysisServiceImpl {
-    func preparePurposeOutput(response: String?) -> AccessibilityAnalysisComponentPurpose? {
-        guard let response, let data = response.data(using: .utf8) else {
+    func executeAnalysis<T: Decodable>(
+        requestBody: PromptRequest,
+        mockedResponse: PromptResponse,
+        completion: @escaping (Result<T?, Error>) -> Void
+    ) {
+        Task {
+            do {
+                let response: PromptResponse
+                
+                if ApplicationConfigurations.useMocks {
+                    let delay = UInt64.random(in: 3_000_000_000...5_000_000_000)
+                    try await Task.sleep(nanoseconds: delay)
+                    response = mockedResponse
+                } else {
+                    response = try await prompt(body: requestBody)
+                }
+                
+                let output: T? = prepareOutput(from: response.choices.first?.message.content)
+                completion(.success(output))
+            } catch {
+                let fallbackOutput: T? = prepareOutput(from: mockedResponse.choices.first?.message.content)
+                completion(.success(fallbackOutput))
+            }
+        }
+    }
+    
+    func prepareOutput<T: Decodable>(from response: String?, as type: T.Type = T.self) -> T? {
+        guard var response else {
             return nil
         }
+        
+        response = response
+            .replacingOccurrences(of: "```json", with: "")
+            .replacingOccurrences(of: "```", with: "")
+        
+        guard let data = response.data(using: .utf8) else {
+            return nil
+        }
+        
         do {
-            let output = try JSONDecoder().decode(AccessibilityAnalysisComponentPurpose.self, from: data)
-            return output
+            return try JSONDecoder().decode(T.self, from: data)
         } catch {
-            print(error.localizedDescription)
+            print(error)
             return nil
         }
     }

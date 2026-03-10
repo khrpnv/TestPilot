@@ -148,7 +148,7 @@ enum AccessibilityAnalysisPrompts {
         
         static func createUserPrompt(
             input: String,
-            purpose: AccessibilityAnalysisComponentPurpose
+            purpose: AccessibilityAnalysisComponentPurpose?
         ) -> String {
             """
             Perform FORMAL accessibility checks on the following SwiftUI component.
@@ -226,6 +226,22 @@ enum AccessibilityAnalysisPrompts {
             - low
             - medium
             - high
+            
+            ------------------------------------------------------------
+            FORMAL SCORE RULES
+            ------------------------------------------------------------
+
+            Assign a score from 1 to 10.
+
+            Scoring guidance:
+            - 10 = no formal accessibility issues detected
+            - 8-9 = minor formal issues only
+            - 6-7 = at least one meaningful medium severity issue
+            - 4-5 = multiple medium issues or one serious high severity issue
+            - 1-3 = severe structural accessibility problems
+
+            The score must reflect the number and severity of formal findings.
+            Lower scores indicate higher structural accessibility risk.
 
             ------------------------------------------------------------
             OUTPUT FORMAT
@@ -234,6 +250,7 @@ enum AccessibilityAnalysisPrompts {
             Return STRICT JSON:
 
             {
+              "score": 1,
               "formal_findings": [
                 {
                   "id": "CATEGORY_IDENTIFIER",
@@ -251,6 +268,7 @@ enum AccessibilityAnalysisPrompts {
             If no issues are found:
 
             {
+              "score": 10,
               "formal_findings": [],
               "analysis_confidence": "high"
             }
@@ -258,7 +276,7 @@ enum AccessibilityAnalysisPrompts {
             ------------------------------------------------------------
 
             Component Brief (context only):
-            \(purpose.toJSON())
+            \(purpose?.toJSON() ?? "Not available")
 
             SwiftUI Component:
             \(input)
@@ -288,8 +306,8 @@ enum AccessibilityAnalysisPrompts {
         
         static func createUserPrompt(
             input: String,
-            purpose: AccessibilityAnalysisComponentPurpose,
-            formalFindings: AccessibilityAnalysisFormalFindings
+            purpose: AccessibilityAnalysisComponentPurpose?,
+            formalFindings: AccessibilityAnalysisFormalFindings?
         ) -> String {
             return """
             Perform a HEURISTIC accessibility review of the following SwiftUI component.
@@ -345,6 +363,23 @@ enum AccessibilityAnalysisPrompts {
                Is there likely cognitive overload due to layout structure or interaction design?
 
             Only report concerns that are reasonably supported by code structure and the component brief.
+            
+            ------------------------------------------------------------
+            HEURISTIC SCORE RULES
+            ------------------------------------------------------------
+
+            Assign a score from 1 to 10.
+
+            Scoring guidance:
+            - 10 = no meaningful heuristic accessibility concerns detected
+            - 8-9 = minor usability concerns only
+            - 6-7 = moderate clarity, grouping, or state communication concerns
+            - 4-5 = multiple meaningful usability concerns or one serious concern
+            - 1-3 = major accessibility usability risk for assistive technology users
+
+            The score must reflect the number, severity, and confidence of heuristic findings.
+            If confidence is low, avoid overly aggressive score reduction.
+            Lower scores indicate higher likely usability risk.
 
             ------------------------------------------------------------
             OUTPUT FORMAT
@@ -353,6 +388,7 @@ enum AccessibilityAnalysisPrompts {
             Return STRICT JSON:
 
             {
+              "score": 1,
               "heuristic_findings": [
                 {
                   "id": "UPPER_SNAKE_CASE_IDENTIFIER",
@@ -376,6 +412,7 @@ enum AccessibilityAnalysisPrompts {
             If no heuristic concerns are found:
 
             {
+              "score": 10,
               "heuristic_findings": [],
               "runtime_validation_recommended": [],
               "analysis_confidence": "high"
@@ -384,10 +421,10 @@ enum AccessibilityAnalysisPrompts {
             ------------------------------------------------------------
 
             Component Brief:
-            \(purpose.toJSON())
+            \(purpose?.toJSON() ?? "Not Available")
 
             Formal Findings:
-            \(formalFindings.toJSON())
+            \(formalFindings?.toJSON() ?? "Not Available")
 
             SwiftUI Component:
             \(input)

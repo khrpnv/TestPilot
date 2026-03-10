@@ -108,7 +108,11 @@ private extension AccessibilityAnalyzerView {
     var rightSection: some View {
         VStack(alignment: .leading, spacing: Constant.verticalSpacing) {
             HStack(spacing: Constant.horizontalSpacing) {
-                AccessibilityAnalysisFeedbackView(feedback: viewModel.feedback) {
+                AccessibilityAnalysisFeedbackView(
+                    viewName: viewModel.feedback?.view,
+                    formalFindings: viewModel.feedback?.formal,
+                    heuristicFindings: viewModel.feedback?.heuristic
+                ) {
                     viewModel.export()
                 }
             }

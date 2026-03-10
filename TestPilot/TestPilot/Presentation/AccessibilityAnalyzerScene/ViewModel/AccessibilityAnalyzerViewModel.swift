@@ -18,6 +18,8 @@ final class AccessibilityAnalyzerViewModel: ViewModel, ObservableObject {
     private var component: String
     private var sourceCode: String
     private var currentLanguage: SupportedLanguage
+    private var formalFindings: AccessibilityAnalysisFormalFindings?
+    private var heuristicFindings: AccessibilityAnalysisHeuristicFindings?
     
     // MARK: - Services
     private let accessibilityAnalyzer: AccessibilityAnalysisService
@@ -30,8 +32,8 @@ final class AccessibilityAnalyzerViewModel: ViewModel, ObservableObject {
     @Published var purposeAnalyzing: Bool = false
     @Published var purposeDetails: AccessibilityAnalysisComponentPurpose?
     
-    @Published var feedback: AccessibilityAnalysisFeedback?
     @Published var isAnalyzing: Bool = false
+    @Published var feedback: AccessibilityAnalysisFeedback?
     
     // MARK: - Transition
     private let transitionHandler: (EvaluateTestsTransition) -> ()
@@ -113,18 +115,42 @@ extension AccessibilityAnalyzerViewModel {
         
         isAnalyzing = true
         
-//        accessibilityAnalyzer.analyze(code: sourceCode) { (result) in
-//            DispatchQueue.main.async { [weak self] in
-//                self?.isAnalyzing = false
-//                
-//                switch result {
-//                case .success(let feedback):
-//                    self?.feedback = feedback
-//                    
-//                case .failure(let failure):
-//                    print(failure)
-//                }
-//            }
-//        }
+        accessibilityAnalyzer.performFormalAnalysis(
+            code: sourceCode,
+            component: component,
+            purpose: purposeDetails
+        ) { [weak self] (formalAnalysisResults) in
+            guard let self else {
+                return
+            }
+            if case let .success(findings) = formalAnalysisResults {
+                formalFindings = findings
+            }
+            
+            accessibilityAnalyzer.performHeuristicAnalysis(
+                code: sourceCode,
+                component: component,
+                purpose: purposeDetails,
+                formalFindings: formalFindings
+            ) { [weak self] (result) in
+                DispatchQueue.main.async { [weak self] in
+                    guard let self else {
+                        return
+                    }
+                    
+                    if case let .success(findings) = result {
+                        heuristicFindings = findings
+                    }
+                    
+                    isAnalyzing = false
+                    
+                    feedback = .init(
+                        view: component,
+                        formal: formalFindings,
+                        heuristic: heuristicFindings
+                    )
+                }
+            }
+        }
     }
 }

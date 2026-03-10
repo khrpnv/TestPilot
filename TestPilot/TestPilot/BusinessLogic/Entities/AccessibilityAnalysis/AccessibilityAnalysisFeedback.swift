@@ -8,30 +8,19 @@
 import SwiftUI
 import Foundation
 
-struct AccessibilityAnalysisFeedback: Decodable {
+struct AccessibilityAnalysisFeedback {
     let view: String
-    let score: Int
-    let issues: [Issue]
-}
-
-// MARK: - Issues
-extension AccessibilityAnalysisFeedback {
-    struct Issue: Decodable {
-        let id: String
-        let type: String
-        let line: Int
-        let description: String
-        let suggestion: String
-        let severity: Severity
-        let manualCheck: Bool
-    }
-}
-
-// MARK: - Severity
-extension AccessibilityAnalysisFeedback {
-    enum Severity: String, Decodable, CaseIterable {
-        case low = "Low"
-        case medium = "Medium"
-        case high = "High"
+    let formal: AccessibilityAnalysisFormalFindings?
+    let heuristic: AccessibilityAnalysisHeuristicFindings?
+    
+    // MARK: - Init
+    init(
+        view: String,
+        formal: AccessibilityAnalysisFormalFindings?,
+        heuristic: AccessibilityAnalysisHeuristicFindings?
+    ) {
+        self.view = view
+        self.formal = formal
+        self.heuristic = heuristic
     }
 }

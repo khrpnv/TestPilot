@@ -20,6 +20,6 @@ final class PromptServiceConfigurations {
     private init() {
         apiKey = ""
         baseUrl = URL(string: "https://api.openai.com/v1/chat/completions")!
-        model = .gpt4o
+        model = .gpt5_4
     }
 }

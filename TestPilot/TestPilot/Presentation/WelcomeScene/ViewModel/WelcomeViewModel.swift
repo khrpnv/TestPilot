@@ -19,7 +19,7 @@ final class WelcomeViewModel: ViewModel, ObservableObject {
     var transitionHandler: (WelcomeTransition) -> ()
     
     // MARK: - Published
-    @Published var selectedModel: PromptModel = .gpt4o
+    @Published var selectedModel: PromptModel = PromptServiceConfigurations.shared.model
     
     // MARK: - Init
     init(transitionHandler: @escaping (WelcomeTransition) -> ()) {
