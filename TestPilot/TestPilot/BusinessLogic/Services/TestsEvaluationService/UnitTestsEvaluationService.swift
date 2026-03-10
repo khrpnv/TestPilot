@@ -24,7 +24,7 @@ final class UnitTestsEvaluationServiceImpl: PromptService, UnitTestsEvaluationSe
         completion: @escaping (Result<EvaluationFeedback?, Error>) -> Void
     ) {
         let body = PromptRequest(
-            model: Configurations.model,
+            model: PromptServiceConfigurations.shared.model.rawValue,
             messages: [
                 .init(
                     role: .system,

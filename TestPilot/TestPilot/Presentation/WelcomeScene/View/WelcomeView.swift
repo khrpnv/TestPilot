@@ -9,7 +9,7 @@ import SwiftUI
 
 struct WelcomeView: View {
     // MARK: - Properties
-    let viewModel: WelcomeViewModel
+    @ObservedObject var viewModel: WelcomeViewModel
     
     // MARK: - Body
     var body: some View {
@@ -80,11 +80,46 @@ struct WelcomeView: View {
         .containerRelativeFrame([.horizontal, .vertical])
         .background(Colors.appDarkGray)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .overlay(alignment: .bottomTrailing) {
+            modelMenu
+                .padding(.trailing, 20)
+                .padding(.bottom, 20)
+        }
     }
 }
 
 // MARK: - Private
 private extension WelcomeView {
+    var modelMenu: some View {
+        Menu {
+            ForEach(PromptModel.allCases, id: \.self) { model in
+                Button {
+                    viewModel.selectModel(model)
+                } label: {
+                    if viewModel.selectedModel == model {
+                        Label(model.rawValue, systemImage: "checkmark")
+                    } else {
+                        Text(model.rawValue)
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "cpu")
+                Text(viewModel.selectedModel.rawValue)
+                    .fixedSize()
+            }
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundColor(.white)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color.black.opacity(0.35))
+            .clipShape(Capsule())
+            .fixedSize()
+        }
+        .fixedSize()
+    }
+    
     func prepareButtonLabel(_ content: String) -> some View {
         return Text(content)
             .font(.system(size: 14))

@@ -14,9 +14,12 @@ enum WelcomeTransition {
     case accessibility
 }
 
-final class WelcomeViewModel {
+final class WelcomeViewModel: ViewModel, ObservableObject {
     // MARK: - Transition
     var transitionHandler: (WelcomeTransition) -> ()
+    
+    // MARK: - Published
+    @Published var selectedModel: PromptModel = .gpt4o
     
     // MARK: - Init
     init(transitionHandler: @escaping (WelcomeTransition) -> ()) {
@@ -40,5 +43,10 @@ extension WelcomeViewModel {
     
     func accessibility() {
         transitionHandler(.accessibility)
+    }
+    
+    func selectModel(_ model: PromptModel) {
+        selectedModel = model
+        PromptServiceConfigurations.shared.model = model
     }
 }

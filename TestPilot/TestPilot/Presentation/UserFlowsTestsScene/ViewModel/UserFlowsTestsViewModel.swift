@@ -46,7 +46,7 @@ final class UserFlowsTestsViewModel: ViewModel, ObservableObject {
 // MARK: - Controls
 extension UserFlowsTestsViewModel {
     func openFile() {
-        openFile { (content, language) in
+        openFile { (content, _, language) in
             sourceCode = content
             inputMode = .preview(code: sourceCode, language: language.rawValue)
             preview = true

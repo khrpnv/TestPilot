@@ -14,7 +14,7 @@ final class AccessibilityTestsGenerationServiceImpl: PromptService, TestsGenerat
         completion: @escaping (Result<String, any Error>) -> Void
     ) {
         let body = PromptRequest(
-            model: Configurations.model,
+            model: PromptServiceConfigurations.shared.model.rawValue,
             messages: [
                 .init(
                     role: .system,

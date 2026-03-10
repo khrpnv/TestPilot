@@ -13,47 +13,39 @@ struct AccessibilityAnalyzerView: View {
 
     // MARK: - Body
     var body: some View {
-        GeometryReader { geometry in
+        GeometryReader { _ in
             ZStack(alignment: .topTrailing) {
                 VStack(alignment: .leading, spacing: Constant.verticalSpacing) {
                     Text(Strings.AccessibilityAnalyzer.title)
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .foregroundColor(.white)
-                    
+
                     Text(Strings.AccessibilityAnalyzer.description)
                         .foregroundColor(.white)
                         .font(.system(size: 17))
                         .fixedSize(horizontal: false, vertical: true)
-                    
+
                     HStack(spacing: Constant.horizontalSpacing) {
-                        SourceCodeView(mode: viewModel.inputMode) {
-                            viewModel.openFile()
-                        } copyContentsAction: { (code) in
-                            viewModel.copyToPasteboard(code)
-                        }
+                        leftSection
                         
                         VStack {
                             Spacer()
-                            
+
                             PrimaryActionButton(
                                 title: Strings.AccessibilityAnalyzer.analyzeButtonTitle,
                                 isLoading: viewModel.isAnalyzing
                             ) {
                                 viewModel.analyze()
                             }
-                            
+
                             Spacer()
                         }
                         
-                        AccessibilityAnalysisFeedbackView(feedback: viewModel.feedback) {
-                            viewModel.export()
-                        }
+                        rightSection
                     }
-                    .frame(height: geometry.size.height - Constant.headerHeight)
                 }
                 .padding()
-                .background(Colors.appDarkGray)
                 
                 Button {
                     viewModel.close()
@@ -67,7 +59,62 @@ struct AccessibilityAnalyzerView: View {
                 .buttonStyle(PlainButtonStyle())
                 .padding()
             }
+            .background(Colors.appDarkGray)
         }
+    }
+}
+
+// MARK: - Subviews
+private extension AccessibilityAnalyzerView {
+    var leftSection: some View {
+        VStack(alignment: .leading, spacing: Constant.verticalSpacing) {
+            HStack(alignment: .top, spacing: Constant.horizontalSpacing) {
+                SourceCodeView(mode: viewModel.inputMode) {
+                    viewModel.openFile()
+                } copyContentsAction: { code in
+                    viewModel.copyToPasteboard(code)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                if let previewImage = viewModel.preview {
+                    previewImage
+                        .resizable()
+                        .scaledToFit()
+                        .frame(maxHeight: .infinity)
+                        .clipShape(RoundedRectangle(cornerRadius: Constant.cornerRadius))
+                        .fixedSize(horizontal: true, vertical: false)
+                }
+            }
+            
+            HStack {
+                Spacer()
+                
+                PrimaryActionButton(
+                    title: Strings.AccessibilityAnalyzer.purposeButtonTitle,
+                    isLoading: viewModel.purposeAnalyzing
+                ) {
+                    viewModel.analyzePurpose()
+                }
+                
+                Spacer()
+            }
+            
+            AccessibilityAnalysisComponentDetailsView(response: viewModel.purposeDetails)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    var rightSection: some View {
+        VStack(alignment: .leading, spacing: Constant.verticalSpacing) {
+            HStack(spacing: Constant.horizontalSpacing) {
+                AccessibilityAnalysisFeedbackView(feedback: viewModel.feedback) {
+                    viewModel.export()
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 }
 
@@ -75,7 +122,8 @@ struct AccessibilityAnalyzerView: View {
 private enum Constant {
     static let verticalSpacing: CGFloat = 16.0
     static let horizontalSpacing: CGFloat = 16.0
-    static let headerHeight: CGFloat = 150.0
     static let closeButtonPadding: CGFloat = 14.0
-    static let resultsContentSpacing: CGFloat = 10.0
+    static let previewHeight: CGFloat = 220.0
+    static let cornerRadius: CGFloat = 12.0
+    static let sourceSectionHeight: CGFloat = 320
 }

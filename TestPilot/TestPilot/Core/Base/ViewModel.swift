@@ -9,7 +9,7 @@ import AppKit
 import Foundation
 
 class ViewModel {
-    func openFile(completion: (String, SupportedLanguage) -> Void) {
+    func openFile(completion: (String, String, SupportedLanguage) -> Void) {
         let panel = NSOpenPanel()
         panel.allowedFileTypes = ["swift", "py"]
         panel.allowsMultipleSelection = false
@@ -18,7 +18,8 @@ class ViewModel {
         if panel.runModal() == .OK, let url = panel.url, let content = try? String(contentsOf: url, encoding: .utf8) {
             let ext = url.pathExtension.lowercased()
             let currentLanguage: SupportedLanguage = (ext == "py") ? .python : .swift
-            completion(content, currentLanguage)
+            let fileName = url.deletingPathExtension().lastPathComponent
+            completion(content, fileName, currentLanguage)
         }
     }
     

@@ -6,6 +6,7 @@
 //
 
 import AppKit
+import SwiftUI
 import Foundation
 
 enum AccessibilityAnalyzerTransition {
@@ -14,6 +15,7 @@ enum AccessibilityAnalyzerTransition {
 
 final class AccessibilityAnalyzerViewModel: ViewModel, ObservableObject {
     // MARK: - Properties
+    private var component: String
     private var sourceCode: String
     private var currentLanguage: SupportedLanguage
     
@@ -23,6 +25,11 @@ final class AccessibilityAnalyzerViewModel: ViewModel, ObservableObject {
     
     // MARK: - Published
     @Published var inputMode: SourceCodeView.Mode = .select
+    @Published var preview: Image?
+    
+    @Published var purposeAnalyzing: Bool = false
+    @Published var purposeDetails: AccessibilityAnalysisComponentPurpose?
+    
     @Published var feedback: AccessibilityAnalysisFeedback?
     @Published var isAnalyzing: Bool = false
     
@@ -35,6 +42,7 @@ final class AccessibilityAnalyzerViewModel: ViewModel, ObservableObject {
         accessibilityReportGenerator: AccessibilityReportGenerationService,
         transitionHandler: @escaping (EvaluateTestsTransition) -> ()
     ) {
+        self.component = ""
         self.sourceCode = ""
         self.currentLanguage = .swift
         
@@ -52,9 +60,11 @@ extension AccessibilityAnalyzerViewModel {
     }
     
     func openFile() {
-        openFile { (content, language) in
+        openFile { (content, fileName, language) in
             sourceCode = content
             currentLanguage = language
+            preview = Image(fileName)
+            component = fileName
             inputMode = .preview(code: sourceCode, language: currentLanguage.rawValue)
         }
     }
@@ -71,6 +81,31 @@ extension AccessibilityAnalyzerViewModel {
         }
     }
     
+    func analyzePurpose() {
+        guard !sourceCode.isEmpty else {
+            return
+        }
+        
+        purposeAnalyzing = true
+        
+        accessibilityAnalyzer.generatePurpose(
+            code: sourceCode,
+            component: component
+        ) { (result) in
+            DispatchQueue.main.async { [weak self] in
+                self?.purposeAnalyzing = false
+                
+                switch result {
+                case .success(let details):
+                    self?.purposeDetails = details
+                    
+                case .failure(let failure):
+                    print(failure)
+                }
+            }
+        }
+    }
+    
     func analyze() {
         guard !sourceCode.isEmpty else {
             return
@@ -78,18 +113,18 @@ extension AccessibilityAnalyzerViewModel {
         
         isAnalyzing = true
         
-        accessibilityAnalyzer.analyze(code: sourceCode) { (result) in
-            DispatchQueue.main.async { [weak self] in
-                self?.isAnalyzing = false
-                
-                switch result {
-                case .success(let feedback):
-                    self?.feedback = feedback
-                    
-                case .failure(let failure):
-                    print(failure)
-                }
-            }
-        }
+//        accessibilityAnalyzer.analyze(code: sourceCode) { (result) in
+//            DispatchQueue.main.async { [weak self] in
+//                self?.isAnalyzing = false
+//                
+//                switch result {
+//                case .success(let feedback):
+//                    self?.feedback = feedback
+//                    
+//                case .failure(let failure):
+//                    print(failure)
+//                }
+//            }
+//        }
     }
 }

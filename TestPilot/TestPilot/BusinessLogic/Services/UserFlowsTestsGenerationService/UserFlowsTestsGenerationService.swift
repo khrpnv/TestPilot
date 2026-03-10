@@ -25,7 +25,7 @@ final class UserFlowsTestsGenerationServiceImpl: PromptService, UserFlowsTestsGe
         completion: @escaping (Result<[String], any Error>) -> Void
     ) {
         let body = PromptRequest(
-            model: Configurations.model,
+            model: PromptServiceConfigurations.shared.model.rawValue,
             messages: [
                 .init(
                     role: .system,
@@ -57,7 +57,7 @@ final class UserFlowsTestsGenerationServiceImpl: PromptService, UserFlowsTestsGe
         completion: @escaping (Result<String, any Error>) -> Void
     ) {
         let body = PromptRequest(
-            model: Configurations.model,
+            model: PromptServiceConfigurations.shared.model.rawValue,
             messages: [
                 .init(
                     role: .system,

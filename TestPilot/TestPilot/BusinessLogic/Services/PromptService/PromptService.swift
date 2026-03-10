@@ -8,18 +8,11 @@
 import Foundation
 
 class PromptService {
-    // MARK: - Configurations
-    enum Configurations {
-        static let apiKey = ""
-        static let baseUrl = URL(string: "https://api.openai.com/v1/chat/completions")!
-        static let model = "gpt-4o"
-    }
-    
     // MARK: - Prompt
     func prompt(body: PromptRequest) async throws -> PromptResponse {
-        var request = URLRequest(url: Configurations.baseUrl)
+        var request = URLRequest(url: PromptServiceConfigurations.shared.baseUrl)
         request.httpMethod = "POST"
-        request.setValue("Bearer \(Configurations.apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(PromptServiceConfigurations.shared.apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(body)
         

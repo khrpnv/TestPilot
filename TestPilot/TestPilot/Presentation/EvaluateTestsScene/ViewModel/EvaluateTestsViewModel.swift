@@ -53,7 +53,7 @@ extension EvaluateTestsViewModel {
     }
     
     func openFile(code: Bool) {
-        openFile { (content, language) in
+        openFile { (content, _, language) in
             currentLanguage = language
             
             if code {

@@ -69,7 +69,7 @@ enum Strings {
         static let title = "Accessibility Analyzer"
         static let description = "This mode reviews your SwiftUI code to detect common accessibility issues before testing. The analyzer provides actionable suggestions to improve inclusivity and ensure compliance with mobile accessibility standards. To get started, select a file containing the source code you want to analyze."
         static let sourceCodeTitle = "Source Code"
-        static let analyzeButtonTitle = "Analyze"
+        static let analyzeButtonTitle = "Analyze Accessibility"
         static let viewTitle = "View:"
         static let scoreTitle = "Score:"
         static let noIssuesFound = "✅ No issues found"
@@ -79,5 +79,6 @@ enum Strings {
         static let severityTitle = "Severity:"
         static let manualCheckNeeded = "⚠️ Requires manual check"
         static let exportButtonTitle = "Export"
+        static let purposeButtonTitle = "Analyze Purpose"
     }
 }

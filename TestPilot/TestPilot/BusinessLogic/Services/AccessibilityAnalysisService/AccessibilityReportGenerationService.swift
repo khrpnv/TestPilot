@@ -66,7 +66,7 @@ final class AccessibilityReportGenerationServiceImpl: AccessibilityReportGenerat
         withNSGraphicsContext(ctx) {
             cursorY = drawCoverHeader(feedback: feedback, at: cursorY, pageWidth: options.pageSize.width)
             
-            cursorY = consumeVerticalSpaceIfNeeded(ctx: ctx, cursorY: cursorY, needed: 180)
+            cursorY = consumeVerticalSpaceIfNeeded(ctx: ctx, cursorY: cursorY, needed: 180) // ensure room
             drawSectionTitle("Summary", atY: &cursorY)
             drawSummary(feedback: feedback, cursorY: &cursorY, pageWidth: options.pageSize.width)
             

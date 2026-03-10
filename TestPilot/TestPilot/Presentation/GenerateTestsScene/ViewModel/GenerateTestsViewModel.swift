@@ -57,7 +57,7 @@ final class GenerateTestsViewModel: ViewModel, ObservableObject {
 // MARK: - Controls
 extension GenerateTestsViewModel {
     func openFile() {
-        openFile { (content, language) in
+        openFile { (content, _, language) in
             sourceCode = content
             currentLanguage = language
             inputMode = .preview(code: sourceCode, language: currentLanguage.rawValue)
