@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		EA0DAD672E10516C0081A1F3 /* Highlightr in Frameworks */ = {isa = PBXBuildFile; productRef = EA0DAD662E10516C0081A1F3 /* Highlightr */; };
+		EAC3B9282F61828A004C8659 /* Highlightr in Frameworks */ = {isa = PBXBuildFile; productRef = EAC3B9272F61828A004C8659 /* Highlightr */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,7 +27,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EA0DAD672E10516C0081A1F3 /* Highlightr in Frameworks */,
+				EAC3B9282F61828A004C8659 /* Highlightr in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,7 +70,7 @@
 			);
 			name = TestPilot;
 			packageProductDependencies = (
-				EA0DAD662E10516C0081A1F3 /* Highlightr */,
+				EAC3B9272F61828A004C8659 /* Highlightr */,
 			);
 			productName = TestPilot;
 			productReference = EA0DACF62E102A0C0081A1F3 /* TestPilot.app */;
@@ -101,7 +101,7 @@
 			mainGroup = EA0DACED2E102A0C0081A1F3;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				EA0DAD652E10516C0081A1F3 /* XCRemoteSwiftPackageReference "Highlightr" */,
+				EAC3B9262F61828A004C8659 /* XCLocalSwiftPackageReference "../Dependencies/Highlightr" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = EA0DACF72E102A0C0081A1F3 /* Products */;
@@ -331,21 +331,16 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		EA0DAD652E10516C0081A1F3 /* XCRemoteSwiftPackageReference "Highlightr" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/raspu/Highlightr.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 2.3.0;
-			};
+/* Begin XCLocalSwiftPackageReference section */
+		EAC3B9262F61828A004C8659 /* XCLocalSwiftPackageReference "../Dependencies/Highlightr" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Dependencies/Highlightr;
 		};
-/* End XCRemoteSwiftPackageReference section */
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		EA0DAD662E10516C0081A1F3 /* Highlightr */ = {
+		EAC3B9272F61828A004C8659 /* Highlightr */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = EA0DAD652E10516C0081A1F3 /* XCRemoteSwiftPackageReference "Highlightr" */;
 			productName = Highlightr;
 		};
 /* End XCSwiftPackageProductDependency section */

@@ -32,43 +32,6 @@ struct WelcomeView: View {
             
             HStack(spacing: Constant.buttonsStackSpacing) {
                 Button {
-                    viewModel.generate(type: .unitTests)
-                } label: {
-                    prepareButtonLabel(Strings.Welcome.createTestsButtonTitle)
-                }
-                .buttonStyle(PrimaryRedButton())
-                
-                Button {
-                    viewModel.evaluate()
-                } label: {
-                    prepareButtonLabel(Strings.Welcome.evaluateTestsButtonTitle)
-                }
-                .buttonStyle(PrimaryRedButton())
-                
-                Button {
-                    viewModel.userFlows()
-                } label: {
-                    prepareButtonLabel(Strings.Welcome.generateUITestsButtonTitle)
-                }
-                .buttonStyle(PrimaryRedButton())
-            }
-            
-            HStack(spacing: Constant.buttonsStackSpacing) {
-                Button {
-                    viewModel.generate(type: .performanceTests)
-                } label: {
-                    prepareButtonLabel(Strings.Welcome.performanceTestsButtonTitle)
-                }
-                .buttonStyle(PrimaryRedButton())
-                
-                Button {
-                    viewModel.generate(type: .accessibilityTests)
-                } label: {
-                    prepareButtonLabel(Strings.Welcome.accessibilityTestsButtonTitle)
-                }
-                .buttonStyle(PrimaryRedButton())
-                
-                Button {
                     viewModel.accessibility()
                 } label: {
                     prepareButtonLabel(Strings.Welcome.accessibilityAnalyzerButtonTitle)

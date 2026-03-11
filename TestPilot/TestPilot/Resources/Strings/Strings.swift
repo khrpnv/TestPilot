@@ -14,7 +14,7 @@ enum Strings {
     
     enum Welcome {
         static let title = "TestPilot"
-        static let description = "TestPilot helps you write better Swift and Python code by harnessing AI. Effortlessly generate high-quality unit tests, create automated UI tests for real user scenarios, and evaluate your existing tests to ensure they’re complete, reliable, and maintainable."
+        static let description = "TestPilot delivers accessibility analysis for iOS UI components—automatically auditing interfaces for compliance, detecting usability barriers, and ensuring strong support for assistive technologies like VoiceOver and Dynamic Type."
         static let createTestsButtonTitle = "Create Unit Tests"
         static let evaluateTestsButtonTitle = "Evaluate Unit Tests"
         static let generateUITestsButtonTitle = "Generate User Flow Tests"
