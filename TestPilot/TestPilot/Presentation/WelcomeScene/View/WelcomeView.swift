@@ -10,7 +10,7 @@ import SwiftUI
 struct WelcomeView: View {
     // MARK: - Properties
     @ObservedObject var viewModel: WelcomeViewModel
-    
+
     // MARK: - Body
     var body: some View {
         VStack(spacing: Constant.contentSpacing) {
@@ -18,18 +18,18 @@ struct WelcomeView: View {
                 .resizable()
                 .cornerRadius(Constant.logoCornerRadius)
                 .frame(width: Constant.logoSize, height: Constant.logoSize)
-            
+
             Text(Strings.Welcome.title)
                 .font(.system(size: 30))
                 .fontWeight(.bold)
                 .foregroundStyle(.white)
-            
+
             Text(Strings.Welcome.description)
                 .font(.system(size: 17))
-                .foregroundColor(Color(.white))
+                .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: Constant.descriptionMaxWidth)
-            
+
             HStack(spacing: Constant.buttonsStackSpacing) {
                 Button {
                     viewModel.accessibility()
@@ -43,10 +43,18 @@ struct WelcomeView: View {
         .containerRelativeFrame([.horizontal, .vertical])
         .background(Colors.appDarkGray)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .overlay(alignment: .bottomTrailing) {
-            modelMenu
-                .padding(.trailing, 20)
-                .padding(.bottom, 20)
+        .overlay(alignment: .bottom) {
+            HStack {
+                bottomLeftToggle
+                    .padding(.leading, 20)
+                    .padding(.bottom, 20)
+
+                Spacer()
+
+                modelMenu
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 20)
+            }
         }
     }
 }
@@ -82,9 +90,22 @@ private extension WelcomeView {
         }
         .fixedSize()
     }
-    
+
+    var bottomLeftToggle: some View {
+        Toggle(isOn: $viewModel.isFeatureEnabled) {
+            Text("")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white)
+        }
+        .toggleStyle(SwitchToggleStyle(tint: .red))
+        .padding(.horizontal, 4)
+        .padding(.vertical, 10)
+        .clipShape(Capsule())
+        .fixedSize()
+    }
+
     func prepareButtonLabel(_ content: String) -> some View {
-        return Text(content)
+        Text(content)
             .font(.system(size: 14))
     }
 }

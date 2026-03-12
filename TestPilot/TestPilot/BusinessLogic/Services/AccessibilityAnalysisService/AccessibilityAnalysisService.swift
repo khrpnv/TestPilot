@@ -19,11 +19,16 @@ protocol AccessibilityAnalysisService {
         purpose: AccessibilityAnalysisComponentPurpose?,
         completion: @escaping (Result<AccessibilityAnalysisFormalFindings?, Error>) -> Void
     )
+    func performFormalFixes(
+        code: String,
+        component: String,
+        formalFindings: AccessibilityAnalysisFormalFindings?,
+        completion: @escaping (Result<AccessibilityAnalysisFormalFixes?, Error>) -> Void
+    )
     func performHeuristicAnalysis(
         code: String,
         component: String,
         purpose: AccessibilityAnalysisComponentPurpose?,
-        formalFindings: AccessibilityAnalysisFormalFindings?,
         completion: @escaping (Result<AccessibilityAnalysisHeuristicFindings?, Error>) -> Void
     )
 }
@@ -89,11 +94,42 @@ final class AccessibilityAnalysisServiceImpl: PromptService, AccessibilityAnalys
         )
     }
     
+    func performFormalFixes(
+        code: String,
+        component: String,
+        formalFindings: AccessibilityAnalysisFormalFindings?,
+        completion: @escaping (Result<AccessibilityAnalysisFormalFixes?, any Error>) -> Void
+    ) {
+        let body = PromptRequest(
+            model: PromptServiceConfigurations.shared.model.rawValue,
+            messages: [
+                .init(
+                    role: .system,
+                    content: AccessibilityAnalysisPrompts.FormalFixes.systemPrompt
+                ),
+                .init(
+                    role: .user,
+                    content: AccessibilityAnalysisPrompts.FormalFixes.createUserPrompt(
+                        input: code,
+                        formalFindings: formalFindings
+                    )
+                )
+            ]
+        )
+        
+        let mockedResponse = AccessibilityAnalyzerMock.getFormalFixesMock(for: component)
+        
+        executeAnalysis(
+            requestBody: body,
+            mockedResponse: mockedResponse,
+            completion: completion
+        )
+    }
+    
     func performHeuristicAnalysis(
         code: String,
         component: String,
         purpose: AccessibilityAnalysisComponentPurpose?,
-        formalFindings: AccessibilityAnalysisFormalFindings?,
         completion: @escaping (Result<AccessibilityAnalysisHeuristicFindings?, any Error>) -> Void
     ) {
         let body = PromptRequest(
@@ -107,8 +143,7 @@ final class AccessibilityAnalysisServiceImpl: PromptService, AccessibilityAnalys
                     role: .user,
                     content: AccessibilityAnalysisPrompts.HeuristicChecks.createUserPrompt(
                         input: code,
-                        purpose: purpose,
-                        formalFindings: formalFindings
+                        purpose: purpose
                     )
                 )
             ]

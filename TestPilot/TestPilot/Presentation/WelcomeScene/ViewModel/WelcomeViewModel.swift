@@ -20,6 +20,7 @@ final class WelcomeViewModel: ViewModel, ObservableObject {
     
     // MARK: - Published
     @Published var selectedModel: PromptModel = PromptServiceConfigurations.shared.model
+    @Published var isFeatureEnabled: Bool = false
     
     // MARK: - Init
     init(transitionHandler: @escaping (WelcomeTransition) -> ()) {
@@ -42,6 +43,7 @@ extension WelcomeViewModel {
     }
     
     func accessibility() {
+        ApplicationConfigurations.useMocks = !isFeatureEnabled
         transitionHandler(.accessibility)
     }
     

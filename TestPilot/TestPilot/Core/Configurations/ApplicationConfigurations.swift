@@ -8,5 +8,5 @@
 import Foundation
 
 enum ApplicationConfigurations {
-    static var useMocks: Bool = false
+    static var useMocks: Bool = true
 }

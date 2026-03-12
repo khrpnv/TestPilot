@@ -113,7 +113,9 @@ private extension AccessibilityAnalyzerView {
                     formalFindings: viewModel.feedback?.formal,
                     heuristicFindings: viewModel.feedback?.heuristic
                 ) {
-                    viewModel.export()
+                    viewModel.exportReport()
+                } exportCode: {
+                    viewModel.exportCode()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

@@ -19,6 +19,7 @@ final class AccessibilityAnalyzerViewModel: ViewModel, ObservableObject {
     private var sourceCode: String
     private var currentLanguage: SupportedLanguage
     private var formalFindings: AccessibilityAnalysisFormalFindings?
+    private var formalFixes: AccessibilityAnalysisFormalFixes?
     private var heuristicFindings: AccessibilityAnalysisHeuristicFindings?
     
     // MARK: - Services
@@ -71,7 +72,7 @@ extension AccessibilityAnalyzerViewModel {
         }
     }
     
-    func export() {
+    func exportReport() {
         guard let feedback else {
             return
         }
@@ -80,6 +81,12 @@ extension AccessibilityAnalyzerViewModel {
             presentingWindow: nil
         ) { (_) in
             print("REPORT EXPORT FINISHED")
+        }
+    }
+    
+    func exportCode() {
+        exportFiles() { (_) in
+            print("FILE EXPORT FINISHED")
         }
     }
     
@@ -127,29 +134,83 @@ extension AccessibilityAnalyzerViewModel {
                 formalFindings = findings
             }
             
-            accessibilityAnalyzer.performHeuristicAnalysis(
+            accessibilityAnalyzer.performFormalFixes(
                 code: sourceCode,
                 component: component,
-                purpose: purposeDetails,
                 formalFindings: formalFindings
-            ) { [weak self] (result) in
-                DispatchQueue.main.async { [weak self] in
-                    guard let self else {
-                        return
-                    }
-                    
-                    if case let .success(findings) = result {
-                        heuristicFindings = findings
-                    }
-                    
-                    isAnalyzing = false
-                    
-                    feedback = .init(
-                        view: component,
-                        formal: formalFindings,
-                        heuristic: heuristicFindings
-                    )
+            ) { [weak self] (formalFixesResults) in
+                guard let self else {
+                    return
                 }
+                if case let .success(fixes) = formalFixesResults {
+                    formalFixes = fixes
+                }
+                
+                accessibilityAnalyzer.performHeuristicAnalysis(
+                    code: formalFixes?.fixedCode ?? sourceCode,
+                    component: component,
+                    purpose: purposeDetails
+                ) { [weak self] (result) in
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self else {
+                            return
+                        }
+                        
+                        if case let .success(findings) = result {
+                            heuristicFindings = findings
+                        }
+                        
+                        isAnalyzing = false
+                        
+                        feedback = .init(
+                            view: component,
+                            formal: formalFindings,
+                            heuristic: heuristicFindings
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Private
+private extension AccessibilityAnalyzerViewModel {
+    func exportFiles(completion: @escaping (Result<[URL], Error>) -> Void) {
+        let firstFileName = component
+        let firstFileExtension = "swift"
+        let firstText = formalFixes?.fixedCode ?? sourceCode
+        let secondFileName = "CHANGELOG"
+        let secondFileExtension = "md"
+        let secondText = formalFixes?.fixesApplied.map { "- \($0)" }.joined(separator: "\n") ?? "No changes applied."
+        
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.canCreateDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Choose Folder"
+
+        panel.begin { response in
+            guard response == .OK, let folderURL = panel.url else {
+                completion(.failure(NSError(
+                    domain: "ExportTextFiles",
+                    code: 1,
+                    userInfo: [NSLocalizedDescriptionKey: "User cancelled export."]
+                )))
+                return
+            }
+
+            let firstURL = folderURL.appendingPathComponent("\(firstFileName).\(firstFileExtension)")
+            let secondURL = folderURL.appendingPathComponent("\(secondFileName).\(secondFileExtension)")
+
+            do {
+                try firstText.write(to: firstURL, atomically: true, encoding: .utf8)
+                try secondText.write(to: secondURL, atomically: true, encoding: .utf8)
+
+                completion(.success([firstURL, secondURL]))
+            } catch {
+                completion(.failure(error))
             }
         }
     }

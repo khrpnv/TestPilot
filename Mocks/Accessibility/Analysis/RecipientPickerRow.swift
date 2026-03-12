@@ -1,11 +1,3 @@
-//
-//  RecipientPickerRow.swift
-//  Test
-//
-//  Created by Illia Khrypunov on 10.03.2026.
-//
-
-
 import SwiftUI
 
 struct RecipientPickerRow: View {

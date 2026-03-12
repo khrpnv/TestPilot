@@ -14,7 +14,8 @@ struct AccessibilityAnalysisFeedbackView: View {
     let heuristicFindings: AccessibilityAnalysisHeuristicFindings?
     
     // MARK: - Closures
-    let export: () -> Void
+    let exportReport: () -> Void
+    let exportCode: () -> Void
     
     // MARK: - Body
     var body: some View {
@@ -30,14 +31,21 @@ struct AccessibilityAnalysisFeedbackView: View {
                         heuristicChecksSection
                     }
                     
-                    HStack {
+                    HStack(alignment: .center, spacing: Constant.contentSpacing) {
                         Spacer()
                         
                         PrimaryActionButton(
-                            title: Strings.AccessibilityAnalyzer.exportButtonTitle,
+                            title: Strings.AccessibilityAnalyzer.exportReportButtonTitle,
                             isLoading: false
                         ) {
-                            export()
+                            exportReport()
+                        }
+                        
+                        PrimaryActionButton(
+                            title: Strings.AccessibilityAnalyzer.exportCodeButtonTitle,
+                            isLoading: false
+                        ) {
+                            exportCode()
                         }
                         
                         Spacer()

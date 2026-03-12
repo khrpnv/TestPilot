@@ -78,7 +78,8 @@ enum Strings {
         static let suggestionTitle = "Suggestion:"
         static let severityTitle = "Severity:"
         static let manualCheckNeeded = "⚠️ Requires manual check"
-        static let exportButtonTitle = "Export"
+        static let exportReportButtonTitle = "Export Report"
+        static let exportCodeButtonTitle = "Export Fixed Component"
         static let purposeButtonTitle = "Analyze Purpose"
     }
 }

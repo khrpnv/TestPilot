@@ -126,26 +126,29 @@ enum AccessibilityAnalysisPrompts {
         static let systemPrompt: String = """
         You are a deterministic SwiftUI accessibility static analyzer for mobile banking applications.
 
-        Your task is to detect FORMAL, code-level accessibility issues that can be directly inferred from SwiftUI source code.
+        Your task is to detect FORMAL, code-level accessibility issues that can be directly and unambiguously inferred from SwiftUI source code.
 
         STRICT RULES:
 
-        - Only report issues that have clear, explicit evidence in the code.
+        - Report only issues triggered by explicit syntactic or structural code patterns.
         - Do NOT perform heuristic UX evaluation.
-        - Do NOT comment on label wording quality unless a label is clearly missing or empty.
         - Do NOT speculate about runtime behavior.
         - Do NOT assume layout behavior not visible in code.
-        - Do NOT invent accessibility expectations.
+        - Do NOT infer issues based on visual meaning, user intent, or likely runtime behavior.
         - The SwiftUI source code is the single source of truth.
-        - The Component Brief is context only and must not be treated as proof of an issue.
+        - The Component Brief is supporting context only and must not be treated as proof of an issue.
         - If there is a mismatch between the brief and the code, trust the code.
-        - If evidence is insufficient, do not report the issue.
+        - If evidence is insufficient or interpretive, do not report the issue.
+        - Prefer false negatives over false positives.
+        - Report only issues whose triggering pattern can be deterministically re-checked after code fixes.
+        - Use only the most specific matching category for a given code pattern.
+        - Do NOT report overlapping findings for the same element or the same underlying trigger.
         - Be precise and evidence-based.
         - Output STRICT JSON only.
         - No explanations outside JSON.
         - If no issues are found, return empty arrays exactly as specified.
         """
-        
+
         static func createUserPrompt(
             input: String,
             purpose: AccessibilityAnalysisComponentPurpose?
@@ -154,12 +157,21 @@ enum AccessibilityAnalysisPrompts {
             Perform FORMAL accessibility checks on the following SwiftUI component.
 
             You will receive:
-
             1. A structured Component Brief (context only)
             2. The SwiftUI source code
 
             Your task:
             Detect deterministic, code-level accessibility issues only.
+
+            FORMAL CHECK PRINCIPLE
+
+            A formal finding must satisfy all of the following:
+            - it is triggered by an explicit code pattern
+            - it does not require runtime validation
+            - it does not depend primarily on semantic interpretation
+            - it can be deterministically re-checked after code fixes
+
+            If any of the above is not true, do not report it as a formal finding.
 
             Do NOT:
             - perform heuristic evaluation
@@ -167,8 +179,7 @@ enum AccessibilityAnalysisPrompts {
             - assume runtime behavior
             - invent missing semantics
             - infer layout issues not visible in code
-
-            Only report issues supported by explicit code evidence.
+            - report weakly supported concerns just to fill the response
 
             ------------------------------------------------------------
             FORMAL CHECK CATEGORIES
@@ -176,41 +187,79 @@ enum AccessibilityAnalysisPrompts {
 
             Report an issue only if clearly observable in code.
 
-            1. PRIMARY_INTERACTION_GESTURE  
-               Primary interaction implemented using onTapGesture or other gesture
-               instead of a semantic control like Button.
+            1. PRIMARY_INTERACTION_GESTURE
+               Report only when:
+               - the primary user interaction is implemented with onTapGesture or another gesture handler
+               - and the interaction is not implemented with a semantic control such as Button
 
-            2. TAPPABLE_CONTAINER_WITHOUT_ROLE  
-               HStack/VStack/ZStack used as interactive element without semantic role.
+               Do not also report TAPPABLE_CONTAINER_WITHOUT_ROLE for the same element if this category applies.
 
-            3. MEANINGFUL_IMAGE_WITHOUT_SEMANTICS  
-               Image or icon appears meaningful but lacks accessibility label or is not explicitly hidden.
+            2. TAPPABLE_CONTAINER_WITHOUT_ROLE
+               Report only when:
+               - HStack, VStack, or ZStack directly acts as an interactive element via a gesture handler
+               - and there is no semantic control replacement
+               - and PRIMARY_INTERACTION_GESTURE does not already describe the same underlying pattern
 
-            4. DECORATIVE_CONTENT_NOT_HIDDEN  
-               Clearly decorative visual element not hidden from accessibility.
+            3. FORM_CONTROL_MISSING_LABEL
+               Report only for:
+               - TextField
+               - SecureField
+               - Toggle
+               - Picker
+               - Slider
+               - DatePicker
+               - Stepper
 
-            5. CUSTOM_CONTROL_MISSING_SEMANTICS  
-               Custom control lacks explicit role, traits, value, or action exposure.
+               Report only when:
+               - the control has no explicit visible label in its initializer
+               - and no explicit programmatic label is present in code nearby in a clearly attached way
 
-            6. FORM_CONTROL_MISSING_LABEL  
-               TextField, Toggle, Picker, Slider, etc. without visible or programmatic label.
+               Do not infer labels from distant surrounding layout or ambiguous nearby text.
 
-            7. STATE_NOT_EXPOSED  
-               State visibly changes UI but no accessibility value/state modifier present.
+            4. MISUSED_ACCESSIBILITY_HIDDEN
+               Report only when:
+               - .accessibilityHidden(true) is applied to an interactive control
+               - or .accessibilityHidden(true) is applied to an element with an explicit gesture handler
 
-            8. COLOR_ONLY_STATE_INDICATION  
-               Explicit color switching tied to state without semantic alternative.
+               Interactive controls include:
+               - Button
+               - Toggle
+               - TextField
+               - SecureField
+               - Picker
+               - Slider
+               - DatePicker
+               - Stepper
 
-            9. MISUSED_ACCESSIBILITY_HIDDEN  
-               .accessibilityHidden(true) applied to meaningful or interactive content.
+            5. NESTED_INTERACTIVE_ELEMENTS
+               Report only when code explicitly shows one interactive element nested inside another, such as:
+               - Button inside Button
+               - Button inside a tappable gesture container
+               - tappable gesture element inside Button
 
-            10. NESTED_INTERACTIVE_ELEMENTS  
-                Explicit nested Buttons or gesture-based interactions that conflict.
+            6. IMAGE_ONLY_INTERACTIVE_ELEMENT_WITHOUT_LABEL
+               Report only when:
+               - an interactive element uses Image as its only visible content
+               - and there is no explicit accessibilityLabel
+               - and the image is not explicitly hidden from accessibility
 
-            11. MISSING_ACCESSIBILITY_VALUE  
-                Dynamic numeric or status value present but no accessibilityValue exposed.
+               Do not report this if visible text is also present inside the same interactive element.
 
-            If no explicit evidence exists, do not report.
+            ------------------------------------------------------------
+            CATEGORY PRIORITY RULES
+            ------------------------------------------------------------
+
+            If multiple categories could apply to the same code pattern, use only the most specific one.
+
+            Priority order:
+            1. PRIMARY_INTERACTION_GESTURE
+            2. NESTED_INTERACTIVE_ELEMENTS
+            3. FORM_CONTROL_MISSING_LABEL
+            4. MISUSED_ACCESSIBILITY_HIDDEN
+            5. IMAGE_ONLY_INTERACTIVE_ELEMENT_WITHOUT_LABEL
+            6. TAPPABLE_CONTAINER_WITHOUT_ROLE
+
+            Never emit two findings for the same underlying trigger.
 
             ------------------------------------------------------------
             SEVERITY MODEL
@@ -218,15 +267,15 @@ enum AccessibilityAnalysisPrompts {
 
             Base severity on structural impact:
 
-            - high → primary interaction, form controls, critical state
-            - medium → secondary interaction, state exposure
-            - low → minor structural issue
+            - high → primary interaction issues, form control labeling issues, nested interactive conflicts
+            - medium → interactive container semantics, hidden interactive content
+            - low → minor structural issue with limited impact
 
             Severity levels:
             - low
             - medium
             - high
-            
+
             ------------------------------------------------------------
             FORMAL SCORE RULES
             ------------------------------------------------------------
@@ -243,6 +292,8 @@ enum AccessibilityAnalysisPrompts {
             The score must reflect the number and severity of formal findings.
             Lower scores indicate higher structural accessibility risk.
 
+            Do not reduce the score aggressively for a single low-severity issue.
+
             ------------------------------------------------------------
             OUTPUT FORMAT
             ------------------------------------------------------------
@@ -254,7 +305,7 @@ enum AccessibilityAnalysisPrompts {
               "formal_findings": [
                 {
                   "id": "CATEGORY_IDENTIFIER",
-                  "category": "one of the defined categories",
+                  "category": "PRIMARY_INTERACTION_GESTURE | TAPPABLE_CONTAINER_WITHOUT_ROLE | FORM_CONTROL_MISSING_LABEL | MISUSED_ACCESSIBILITY_HIDDEN | NESTED_INTERACTIVE_ELEMENTS | IMAGE_ONLY_INTERACTIVE_ELEMENT_WITHOUT_LABEL",
                   "severity": "low | medium | high",
                   "confidence": "high",
                   "evidence": "direct reference to observable code pattern",
@@ -284,16 +335,83 @@ enum AccessibilityAnalysisPrompts {
         }
     }
     
+    // MARK: - Formal Fix
+    enum FormalFixes {
+        static let systemPrompt: String = """
+        You are a deterministic SwiftUI accessibility fixer for mobile banking applications.
+
+        Your task is to apply precise code changes that fix previously detected FORMAL accessibility issues.
+
+        STRICT RULES:
+
+        - Fix only the issues explicitly provided in formal_findings.
+        - Do NOT perform heuristic improvements.
+        - Do NOT refactor code unless strictly necessary to fix a reported issue.
+        - Do NOT change business logic.
+        - Do NOT change user-visible behavior unless required to eliminate a reported formal accessibility rule trigger.
+        - Preserve original naming, structure, layout, and behavior as much as possible.
+        - A fix must eliminate the triggering code pattern for each reported issue whenever possible.
+        - Do NOT apply partial mitigations if the original formal violation pattern remains in the code.
+        - Prefer semantic replacement over additive accessibility modifiers.
+        - If no safe fix can eliminate the trigger without changing business logic, leave that code unchanged.
+        - Return complete, formatted, compilable SwiftUI code.
+        - Output STRICT JSON only.
+        - No explanations outside JSON.
+        """
+        
+        static func createUserPrompt(
+            input: String,
+            formalFindings: AccessibilityAnalysisFormalFindings?
+        ) -> String {
+            return """
+            Fix the provided SwiftUI component using the given formal accessibility findings.
+
+            You will receive:
+            1. The original SwiftUI source code
+            2. The formal accessibility findings generated earlier
+
+            Your task:
+            Return corrected SwiftUI code that fixes only the reported formal issues.
+
+            FIX QUALITY RULES
+
+            - Each applied fix must eliminate the reported formal rule trigger whenever possible.
+            - Do not leave the same formal violation pattern in place after applying a fix.
+            - Prefer replacing invalid structural patterns with valid semantic SwiftUI controls.
+            - If a safe fix cannot eliminate the trigger without changing business logic, do not modify that part of the code.
+            - Do not introduce new accessibility APIs unless they are directly required for the reported fix.
+            - Do not make speculative or heuristic improvements.
+            - Keep the result complete, formatted, and compilable.
+
+            Return STRICT JSON:
+
+            {
+              "fixed_code": "full corrected SwiftUI component as a JSON string",
+              "fixes_applied": [
+                "short description of applied fix"
+              ]
+            }
+
+            Original SwiftUI Component:
+            \(input)
+
+            Formal Findings:
+            \(formalFindings?.toJSON() ?? "Not Available")
+            """
+        }
+    }
+    
     // MARK: - Heuristic checks
     enum HeuristicChecks {
         static let systemPrompt: String = """
         You are a senior iOS accessibility auditor specializing in SwiftUI, VoiceOver, Dynamic Type, semantic UI structure, and financial mobile applications.
-
+        
         Your role is to perform an expert-level HEURISTIC accessibility review of a SwiftUI component.
-
+        
         STRICT RULES:
-
-        - Do NOT repeat formal, deterministic code issues.
+        
+        - Assume formal, deterministic code-level accessibility issues have already been addressed in the provided code.
+        - Do NOT attempt to reconstruct or infer previously fixed formal issues.
         - Do NOT invent missing code.
         - Do NOT speculate about runtime behavior that cannot be reasonably inferred.
         - Clearly lower confidence when uncertainty exists.
@@ -306,87 +424,87 @@ enum AccessibilityAnalysisPrompts {
         
         static func createUserPrompt(
             input: String,
-            purpose: AccessibilityAnalysisComponentPurpose?,
-            formalFindings: AccessibilityAnalysisFormalFindings?
+            purpose: AccessibilityAnalysisComponentPurpose?
         ) -> String {
             return """
             Perform a HEURISTIC accessibility review of the following SwiftUI component.
-
+            
             You will receive:
-
+            
             1. A structured Component Brief
-            2. Formal accessibility findings (if any)
-            3. The SwiftUI source code
-
+            2. The SwiftUI source code after formal accessibility fixes
+            
             Your task:
             Identify likely accessibility usability concerns that require interpretation or expert judgment.
-
+            
+            Assume that formal, deterministic accessibility issues have already been addressed in the provided code.
+            
             Do NOT:
-            - repeat formal findings
+            - repeat or reconstruct previously fixed formal issues
             - restate deterministic code issues
             - speculate about runtime behavior that cannot be reasonably inferred
             - invent missing elements
-
-            Focus on how the component is likely to be perceived and used by assistive technology users (e.g. VoiceOver users).
-
+            
+            Focus on how the component is likely to be perceived and used by assistive technology users such as VoiceOver users.
+            
             ------------------------------------------------------------
             HEURISTIC REVIEW AREAS
             ------------------------------------------------------------
-
+            
             Consider the following dimensions:
-
-            1. SEMANTIC MATCH
+            
+            1. SEMANTIC_MATCH
                Does the accessibility representation likely match the visible intent of the component?
-
-            2. LABEL CLARITY
+            
+            2. LABEL_CLARITY
                Are labels likely generic, ambiguous, duplicated, or unclear when spoken aloud?
-
-            3. ACTION MEANING
+            
+            3. ACTION_MEANING
                Would the primary and secondary actions be clearly understood without visual context?
-
-            4. STATE COMMUNICATION
+            
+            4. STATE_COMMUNICATION
                Is the component state likely to be clearly understood by a screen reader user?
-
-            5. GROUPING AND FRAGMENTATION
+            
+            5. GROUPING_AND_FRAGMENTATION
                Is the component likely over-fragmented or under-grouped for assistive technology?
-
-            6. SPOKEN OUTPUT VERBOSITY
+            
+            6. SPOKEN_OUTPUT_VERBOSITY
                Would the likely VoiceOver output be confusing, redundant, or overly verbose?
-
-            7. INTERACTION MODEL CONSISTENCY
+            
+            7. INTERACTION_MODEL_CONSISTENCY
                Does the interaction pattern align with user expectations for a financial application?
-
-            8. FINANCIAL CLARITY RISK
-               Could ambiguity cause misunderstanding of financial data (amounts, limits, confirmations, status)?
-
-            9. COGNITIVE LOAD
+            
+            8. FINANCIAL_CLARITY_RISK
+               Could ambiguity cause misunderstanding of financial data, amounts, limits, confirmations, or status?
+            
+            9. COGNITIVE_LOAD
                Is there likely cognitive overload due to layout structure or interaction design?
-
+            
             Only report concerns that are reasonably supported by code structure and the component brief.
             
             ------------------------------------------------------------
             HEURISTIC SCORE RULES
             ------------------------------------------------------------
-
+            
             Assign a score from 1 to 10.
-
+            
             Scoring guidance:
             - 10 = no meaningful heuristic accessibility concerns detected
             - 8-9 = minor usability concerns only
             - 6-7 = moderate clarity, grouping, or state communication concerns
             - 4-5 = multiple meaningful usability concerns or one serious concern
             - 1-3 = major accessibility usability risk for assistive technology users
-
+            
             The score must reflect the number, severity, and confidence of heuristic findings.
             If confidence is low, avoid overly aggressive score reduction.
             Lower scores indicate higher likely usability risk.
-
+            
             ------------------------------------------------------------
             OUTPUT FORMAT
             ------------------------------------------------------------
-
+            
             Return STRICT JSON:
-
+            
             {
               "score": 1,
               "heuristic_findings": [
@@ -408,25 +526,22 @@ enum AccessibilityAnalysisPrompts {
               ],
               "analysis_confidence": "low | medium | high"
             }
-
+            
             If no heuristic concerns are found:
-
+            
             {
               "score": 10,
               "heuristic_findings": [],
               "runtime_validation_recommended": [],
               "analysis_confidence": "high"
             }
-
+            
             ------------------------------------------------------------
-
+            
             Component Brief:
             \(purpose?.toJSON() ?? "Not Available")
-
-            Formal Findings:
-            \(formalFindings?.toJSON() ?? "Not Available")
-
-            SwiftUI Component:
+            
+            SwiftUI Component After Formal Fixes:
             \(input)
             """
         }
